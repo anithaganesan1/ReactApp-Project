@@ -2,12 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')  // Add this credential in Jenkins
-        IMAGE_NAME = 'anithaganesan1/react-app'                 // Replace with your DockerHub repo name
-    }
-
-    triggers {
-        githubPush()
+        IMAGE_NAME = "anithaganesan1/dev"
+        PROD_IMAGE_NAME = "anithaganesan1/prod"
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-id')
     }
 
     stages {
@@ -20,35 +17,38 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build("${IMAGE_NAME}:${env.BRANCH_NAME}")
+                    sh 'chmod +x build.sh'
+                    sh './build.sh'
                 }
             }
         }
 
-        stage('Push Docker Image') {
-            when {
-                anyOf {
-                    branch 'dev'
-                    branch 'master'
-                }
-            }
+        stage('Push Docker Image to Docker Hub') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
-                        dockerImage.push()
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-id') {
+                        if (env.BRANCH_NAME == 'master') {
+                            sh "docker tag ${IMAGE_NAME}:latest ${PROD_IMAGE_NAME}:latest"
+                            sh "docker push ${PROD_IMAGE_NAME}:latest"
+                        } else if (env.BRANCH_NAME == 'dev') {
+                            sh "docker push ${IMAGE_NAME}:latest"
+                        }
                     }
                 }
             }
         }
 
         stage('Deploy') {
-            when {
-                branch 'master'
-            }
             steps {
-                echo "Deploying to production server..."
-                // You can ssh into a server or use scp/docker/kubectl here
+                script {
+                    sh 'chmod +x deploy.sh'
+                    sh './deploy.sh'
+                }
             }
         }
+    }
+
+    triggers {
+        githubPush()
     }
 }
