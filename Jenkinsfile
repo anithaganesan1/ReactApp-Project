@@ -1,15 +1,21 @@
 pipeline {
     agent any
+
     environment {
         IMAGE_NAME = "anithaganesan1/dev"
         PROD_IMAGE_NAME = "anithaganesan1/prod"
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-id')
+        BRANCH_NAME = "${env.GIT_BRANCH}".replaceFirst(/^origin\//, '')  // Normalize branch name
+    }
+
+    triggers {
+        githubPush()
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: "${env.BRANCH_NAME}", url: 'https://github.com/anithaganesan1/React-app--Deploy.git'
+                checkout scm
             }
         }
 
@@ -23,13 +29,19 @@ pipeline {
         }
 
         stage('Push Docker Image to Docker Hub') {
+            when {
+                anyOf {
+                    branch 'dev'
+                    branch 'master'
+                }
+            }
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-id') {
-                        if (env.BRANCH_NAME == 'master') {
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
+                        if (BRANCH_NAME == 'master') {
                             sh "docker tag ${IMAGE_NAME}:latest ${PROD_IMAGE_NAME}:latest"
                             sh "docker push ${PROD_IMAGE_NAME}:latest"
-                        } else if (env.BRANCH_NAME == 'dev') {
+                        } else if (BRANCH_NAME == 'dev') {
                             sh "docker push ${IMAGE_NAME}:latest"
                         }
                     }
@@ -38,6 +50,9 @@ pipeline {
         }
 
         stage('Deploy') {
+            when {
+                branch 'master'
+            }
             steps {
                 script {
                     sh 'chmod +x deploy.sh'
@@ -45,9 +60,5 @@ pipeline {
                 }
             }
         }
-    }
-
-    triggers {
-        githubPush()
     }
 }

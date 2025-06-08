@@ -1,4 +1,13 @@
-# Use Nginx to serve pre-built static React files
+# Stage 1: Build React App
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+COPY . .
+
+RUN npm install
+RUN npm run build
+
+# Stage 2: Serve  Use Nginx to serve pre-built static React files
 FROM nginx:alpine
 
 # Copy custom Nginx config to support client-side routing
@@ -9,3 +18,4 @@ COPY build/ /usr/share/nginx/html
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
+#

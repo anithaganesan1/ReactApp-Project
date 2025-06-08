@@ -1,8 +1,7 @@
-# .dockerignore
 node_modules
-build
-.dockerignore
 .git
 .gitignore
-npm-debug.log
 Dockerfile
+docker-compose.yml
+build.sh
+deploy.sh
