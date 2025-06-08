@@ -1,6 +1,5 @@
 pipeline {
     agent any
-
     environment {
         IMAGE_NAME = "anithaganesan1/dev"
         PROD_IMAGE_NAME = "anithaganesan1/prod"
