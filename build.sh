@@ -10,6 +10,12 @@ export NVM_DIR="$HOME/.nvm"
 # Variables
 IMAGE_NAME="anithaganesan1/react-app"
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+TAG="latest"
+if [ "$BRANCH" == "dev" ]; then
+  TAG="dev"
+elif [ "$BRANCH" == "master" ]; then
+  TAG="prod"
+fi
 
 echo "📦 Installing dependencies..."
 npm install
