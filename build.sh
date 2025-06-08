@@ -3,6 +3,10 @@
 # Fail on any error
 set -e
 
+# Load NVM
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
 # Variables
 IMAGE_NAME="anithaganesan1/react-app"
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
