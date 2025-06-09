@@ -3,13 +3,11 @@ pipeline {
 
     environment {
         IMAGE_NAME = "anithaganesan1/react-app"
-        //DOCKER_CREDENTIALS_ID = "dockerhub-creds"
         DOCKER_CREDENTIALS_ID = "dockerhub-id"
-
     }
 
     tools {
-        nodejs "NodeJS_22"  // You must configure this NodeJS tool in Jenkins → Global Tool Configuration
+        nodejs "NodeJS_22"  // Make sure this is configured in Jenkins > Global Tool Configuration
     }
 
     stages {
@@ -22,15 +20,19 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                echo "📦 Installing NPM packages..."
-                sh 'npm install'
+                dir('devops-build') {
+                    echo "📦 Installing NPM packages..."
+                    sh 'npm install'
+                }
             }
         }
 
         stage('Build React App') {
             steps {
-                echo "🔨 Building React app..."
-                sh 'npm run build'
+                dir('devops-build') {
+                    echo "🔨 Building React app..."
+                    sh 'npm run build'
+                }
             }
         }
 
@@ -38,9 +40,12 @@ pipeline {
             steps {
                 script {
                     def branch = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
-                    env.TAG = branch
+                    env.TAG = branch.replaceAll('[^a-zA-Z0-9_.-]', '-').toLowerCase()
+
                     echo "🐳 Building Docker image: ${IMAGE_NAME}:${TAG}"
-                    sh "docker build -t ${IMAGE_NAME}:${TAG} ."
+                    dir('devops-build') {
+                        sh "docker build -t ${IMAGE_NAME}:${TAG} ."
+                    }
                 }
             }
         }
@@ -60,7 +65,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Pipeline completed successfully!"
+            echo "✅ Pipeline completed and image pushed!"
         }
         failure {
             echo "❌ Pipeline failed!"
