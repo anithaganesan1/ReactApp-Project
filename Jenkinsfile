@@ -3,7 +3,9 @@ pipeline {
 
     environment {
         IMAGE_NAME = "anithaganesan1/react-app"
-        DOCKER_CREDENTIALS_ID = "dockerhub-creds"
+        //DOCKER_CREDENTIALS_ID = "dockerhub-creds"
+        DOCKER_CREDENTIALS_ID = "dockerhub-id"
+
     }
 
     tools {
