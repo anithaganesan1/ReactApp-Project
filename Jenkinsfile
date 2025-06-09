@@ -7,7 +7,7 @@ pipeline {
     }
 
     tools {
-        nodejs "NodeJS_22"  // Make sure this is configured in Jenkins > Global Tool Configuration
+        nodejs "NodeJS_22"  // Ensure NodeJS_22 is configured in Jenkins Global Tool Config
     }
 
     stages {
@@ -20,22 +20,25 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                dir('devops-build') {
-                    echo "📦 Installing NPM packages..."
-                    sh 'npm install'
-                }
+                echo "📦 Installing NPM packages..."
+                sh 'npm install'
             }
         }
 
         stage('Build React App') {
             steps {
                 dir('devops-build') {
-                    echo "🔨 Building React app..."
-                    sh 'npm run build'
+                echo "🔨 Building React app..."
+                sh 'npm run build'
                 }
             }
         }
 
+        stage('Debug Workspace') {
+            steps {
+             sh 'ls -R'
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 script {
@@ -43,9 +46,7 @@ pipeline {
                     env.TAG = branch.replaceAll('[^a-zA-Z0-9_.-]', '-').toLowerCase()
 
                     echo "🐳 Building Docker image: ${IMAGE_NAME}:${TAG}"
-                    dir('devops-build') {
-                        sh "docker build -t ${IMAGE_NAME}:${TAG} ."
-                    }
+                    sh "docker build -t ${IMAGE_NAME}:${TAG} ."
                 }
             }
         }
