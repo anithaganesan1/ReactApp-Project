@@ -36,7 +36,9 @@ pipeline {
         stage('Deploy Container') {
             steps {
                 echo '🚀 Deploying container...'
+                sh 'chmod +x deploy.sh'
                 sh './deploy.sh'
+
             }
         }
     }
