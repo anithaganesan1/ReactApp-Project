@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "aniganesan/dev"
+        DEV_IMAGE = "aniganesan/dev"
+        PROD_IMAGE = "aniganesan/prod"
         DOCKER_HUB_CREDENTIALS = 'dockerhub-id'
     }
 
@@ -16,29 +17,36 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                echo '🐳 Building Docker image from pre-built files...'
-                sh 'docker build -t $IMAGE_NAME .'
+                script {
+                    def imageName = env.BRANCH_NAME == 'master' ? env.PROD_IMAGE : env.DEV_IMAGE
+                    echo "🐳 Building image for branch ${env.BRANCH_NAME} → ${imageName}"
+                    sh "docker build -t ${imageName} ."
+                }
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                echo '📤 Pushing Docker image to Docker Hub...'
-                withCredentials([usernamePassword(credentialsId: "$DOCKER_HUB_CREDENTIALS", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                        docker push $IMAGE_NAME
-                    """
+                script {
+                    def imageName = env.BRANCH_NAME == 'master' ? env.PROD_IMAGE : env.DEV_IMAGE
+                    echo "📤 Pushing ${imageName} to Docker Hub..."
+                    withCredentials([usernamePassword(credentialsId: env.DOCKER_HUB_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                            docker push ${imageName}
+                        """
+                    }
                 }
             }
         }
 
         stage('Deploy Container') {
+            when {
+                branch 'dev'
+            }
             steps {
-                echo '🚀 Deploying container...'
-                sh 'chmod +x deploy.sh'
-                sh './deploy.sh'
-
+                echo '🚀 Deploying dev container...'
+                sh 'chmod +x deploy.sh && ./deploy.sh'
             }
         }
     }
