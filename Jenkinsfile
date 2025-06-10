@@ -1,63 +1,60 @@
 pipeline {
     agent any
 
-    environment {
-        IMAGE_NAME = "anithaganesan1/react-app"
-        DOCKER_CREDENTIALS_ID = "dockerhub-id"
+    tools {
+        nodejs 'NodeJS_22' // Make sure this is configured in Jenkins Global Tool Config
     }
 
-    tools {
-        nodejs "NodeJS_22"  // Ensure NodeJS_22 is configured in Jenkins Global Tool Config
+    environment {
+        IMAGE_NAME = "aniganesan/dev"
+        DOCKER_HUB_CREDENTIALS = 'dockerhub-id'  // Your DockerHub credentials ID in Jenkins
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                echo "🔍 Checking out source code..."
+                echo '📥 Checking out source code...'
                 checkout scm
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                echo "📦 Installing NPM packages..."
+                echo '📦 Installing NPM packages...'
+                // Run npm install in root repo folder or change if you want to install inside devops-build
                 sh 'npm install'
+                sh 'chmod -R +x node_modules/.bin'
             }
         }
 
         stage('Build React App') {
             steps {
                 dir('devops-build') {
-                echo "🔨 Building React app..."
-                sh 'npm run build'
+                    echo '🔨 Building React app...'
+                    sh 'npm run build'
                 }
             }
         }
 
-        stage('Debug Workspace') {
-            steps {
-             sh 'ls -R'
-            }
-        }
         stage('Build Docker Image') {
             steps {
-                script {
-                    def branch = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
-                    env.TAG = branch.replaceAll('[^a-zA-Z0-9_.-]', '-').toLowerCase()
-
-                    echo "🐳 Building Docker image: ${IMAGE_NAME}:${TAG}"
-                    sh "docker build -t ${IMAGE_NAME}:${TAG} ."
+                dir('devops-build') {
+                    echo '🐳 Building Docker image...'
+                    // Using env var IMAGE_NAME is better
+                    sh "docker build -t ${IMAGE_NAME} ."
                 }
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                script {
-                    echo "🔐 Logging in to Docker Hub..."
-                    withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin"
-                        sh "docker push ${IMAGE_NAME}:${TAG}"
+                dir('devops-build') {
+                    echo '📤 Pushing image to Docker Hub...'
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            docker push ${IMAGE_NAME}
+                        """
                     }
                 }
             }
@@ -65,11 +62,11 @@ pipeline {
     }
 
     post {
-        success {
-            echo "✅ Pipeline completed and image pushed!"
-        }
         failure {
-            echo "❌ Pipeline failed!"
+            echo '❌ Build or deployment failed!'
+        }
+        success {
+            echo '✅ Build and deployment successful!'
         }
     }
 }

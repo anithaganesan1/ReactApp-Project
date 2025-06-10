@@ -1,26 +1,8 @@
 #!/bin/bash
-set -e
 
-IMAGE_NAME="anithaganesan1/react-app"
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-TAG="latest"
+# Stop and remove any running container with name react-app
+docker stop react-app 2>/dev/null || true
+docker rm react-app 2>/dev/null || true
 
-if [ "$BRANCH" == "dev" ]; then
-  TAG="dev"
-elif [ "$BRANCH" == "master" ]; then
-  TAG="prod"
-fi
-
-echo "Deploying image $IMAGE_NAME:$TAG"
-
-# Pull the latest image from Docker Hub
-docker pull $IMAGE_NAME:$TAG
-
-# Stop and remove existing container (if any)
-docker stop react-app || true
-docker rm react-app || true
-
-# Run the new container
-docker run -d -p 80:80 --name react-app $IMAGE_NAME:$TAG
-
-echo "Deployment done."
+# Run the container with name react-app, mapping port 3000 on host to 80 in container
+docker run -d --name react-app -p 3000:80 aniganesan/dev:latest
