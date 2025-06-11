@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                echo '📥 Checking out source code...'
+                echo 'Checking out source code...'
                 checkout scm
             }
         }
@@ -20,7 +20,7 @@ pipeline {
                 script {
                     def imageName = env.BRANCH_NAME == 'master' ? env.PROD_IMAGE : env.DEV_IMAGE
                     echo "🐳 Building image for branch ${env.BRANCH_NAME} → ${imageName}"
-                    sh "docker build -t ${imageName} ."
+                    sh "chmod +x build.sh && ./build.sh ${imageName}"
                 }
             }
         }
@@ -42,11 +42,17 @@ pipeline {
 
         stage('Deploy Container') {
             when {
-                branch 'dev'
+                anyOf {
+                    branch 'dev'
+                    branch 'master'
+                }
             }
             steps {
-                echo '🚀 Deploying dev container...'
-                sh 'chmod +x deploy.sh && ./deploy.sh'
+                script {
+                    echo "🚀 Deploying container for ${env.BRANCH_NAME}..."
+                    sh "chmod +x deploy.sh"
+                    sh "./deploy.sh ${env.BRANCH_NAME}"
+                }
             }
         }
     }
