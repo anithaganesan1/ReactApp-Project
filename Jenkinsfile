@@ -49,7 +49,7 @@ pipeline {
             }
             steps {
                 script {
-                    echo "🚀 Deploying container for ${env.BRANCH_NAME}..."
+                    echo "Deploying container for ${env.BRANCH_NAME}..."
                     sh "chmod +x deploy.sh"
                     sh "./deploy.sh ${env.BRANCH_NAME}"
                 }
