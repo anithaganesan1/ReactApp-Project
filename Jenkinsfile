@@ -18,7 +18,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    def imageName = env.BRANCH_NAME == 'master' ? env.PROD_IMAGE : env.DEV_IMAGE
+                    def imageName = env.BRANCH_NAME == 'main' ? env.PROD_IMAGE : env.DEV_IMAGE
                     echo "🐳 Building image for branch ${env.BRANCH_NAME} → ${imageName}"
                     sh "chmod +x build.sh && ./build.sh ${imageName}"
                 }
@@ -28,7 +28,7 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    def imageName = env.BRANCH_NAME == 'master' ? env.PROD_IMAGE : env.DEV_IMAGE
+                    def imageName = env.BRANCH_NAME == 'main' ? env.PROD_IMAGE : env.DEV_IMAGE
                     echo "📤 Pushing ${imageName} to Docker Hub..."
                     withCredentials([usernamePassword(credentialsId: env.DOCKER_HUB_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh """
@@ -44,7 +44,7 @@ pipeline {
             when {
                 anyOf {
                     branch 'dev'
-                    branch 'master'
+                    branch 'main'
                 }
             }
             steps {
