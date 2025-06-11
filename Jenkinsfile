@@ -19,7 +19,7 @@ pipeline {
             steps {
                 script {
                     def imageName = env.BRANCH_NAME == 'main' ? env.PROD_IMAGE : env.DEV_IMAGE
-                    echo "🐳 Building image for branch ${env.BRANCH_NAME} → ${imageName}"
+                    echo " Building image for branch ${env.BRANCH_NAME} → ${imageName}"
                     sh "chmod +x build.sh && ./build.sh ${imageName}"
                 }
             }
