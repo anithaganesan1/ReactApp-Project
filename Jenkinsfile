@@ -29,7 +29,7 @@ pipeline {
             steps {
                 script {
                     def imageName = env.BRANCH_NAME == 'main' ? env.PROD_IMAGE : env.DEV_IMAGE
-                    echo "Pushing ${imageName} to Docker Hub.for main.."
+                    echo "Pushing ${imageName} to Docker Main.."
                     withCredentials([usernamePassword(credentialsId: env.DOCKER_HUB_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh """
                             echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
